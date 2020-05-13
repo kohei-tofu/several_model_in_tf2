@@ -16,7 +16,7 @@ python some_modelSequential.py
 -----------
 
 model1 trains y = 1 (x)  
-model2 trains y = 2 (x)
+model2 trains y = 2 (x)  
 model3 trains y = model1(x) + model(x)
 
 -----------
