@@ -7,7 +7,7 @@ tensorflow v2.0 or greater
 and   
 numpy any version
 
-### How tot test
+### How to test
 ```
 python some_model.py
 or
