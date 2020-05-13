@@ -114,8 +114,12 @@ def train_by_othermodel():
     path2save_2 = './model2'
     model_1 = keras.models.load_model(path2save_1 + '.h5')
     model_2 = keras.models.load_model(path2save_2 + '.h5')
-    #model_1.summary()
-    #model_2.summary()
+    for l in model_1.layers:
+        l.trainable = False
+    for l in model_2.layers:
+        l.trainable = False
+    model_1.summary()
+    model_2.summary()
 
     model_3 = encoder()
     path2save_3 = './model3'
@@ -171,10 +175,26 @@ def train_by_othermodel():
 
     print('loss for model2', mse_test.result())
 
+def summary():
+    path2save_1 = './model1'
+    path2save_2 = './model2'
+    path2save_3 = './model3'
+    model_1 = keras.models.load_model(path2save_1 + '.h5')
+    model_2 = keras.models.load_model(path2save_2 + '.h5')
+    model_3 = keras.models.load_model(path2save_3 + '.h5')
+    model_1.layers[0].trainable = False
+    model_2.layers[0].trainable = False
+    model_1.summary()
+    model_2.summary()
+    model_3.summary()
+
+
 if __name__ == '__main__':
 
-    #create_model()
+    create_model()
 
-    #load()
+    load()
 
     train_by_othermodel()
+
+    summary()
