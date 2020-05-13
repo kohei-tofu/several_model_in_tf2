@@ -3,7 +3,8 @@
 test code for saving, loading, optimizing several model at once
 
 ### Dependences
-tensorflow v2.0 or greater
+tensorflow v2.0 or greater  
+and   
 numpy any version
 
 ### How tot test
