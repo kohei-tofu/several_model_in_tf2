@@ -6,44 +6,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense
 from tensorflow.keras import optimizers
 from tensorflow.keras import metrics
-
-
-
-class dataloader():
-    def __init__(self, 
-                 coeff = 1,
-                 batch_size=20):
-        self.batch_size = batch_size
-        self.N = 2000
-        self.coeff = coeff
-        self._reset()
-
-    def __iter__(self):
-        return self
-
-    def __len__(self):
-        #N = len(self.dataset)
-        N = self.N
-        b = self.batch_size
-        return N // b + bool(N % b)
-
-    def _reset(self):
-        self._idx = 0
-
-    def __next__(self):
-        if self._idx >= self.N:
-            self._reset()
-            raise StopIteration()
-
-        ### collocation points and governing equations
-        x = (5 * np.random.rand(self.batch_size))[:, np.newaxis].astype(np.float32)
-        y = self.coeff * x
-        ###
-
-        x = tf.convert_to_tensor(x)
-        y = tf.convert_to_tensor(y)
-        self._idx += self.batch_size
-        return x, y
+from _dataloader import dataloader
 
 
 def encoder():
@@ -110,7 +73,6 @@ def create_model():
 
 
 def load():
-
     mse1 = metrics.Mean()
     mse2 = metrics.Mean()
     def compute_loss1(y, preds):
@@ -145,9 +107,74 @@ def load():
         compute_loss2(y, pred)
     print('loss for model2', mse2.result())
 
+
+def train_by_othermodel():
+
+    path2save_1 = './model1'
+    path2save_2 = './model2'
+    model_1 = keras.models.load_model(path2save_1 + '.h5')
+    model_2 = keras.models.load_model(path2save_2 + '.h5')
+    #model_1.summary()
+    #model_2.summary()
+
+    model_3 = encoder()
+    path2save_3 = './model3'
+    
+    epoch = 100
+    optimizer = optimizers.Adam(learning_rate=1e-2)
+    criterion = tf.keras.losses.MeanSquaredError()
+    mse_train = metrics.Mean()
+    mse_test = metrics.Mean()
+    def compute_loss_train(y, preds):
+        loss = criterion(y, preds)
+        return loss
+        
+    def compute_loss_test(y, preds):
+        loss = criterion(y, preds)
+        mse_test(loss)
+    
+    
+
+
+    @tf.function
+    def train_step(mdl, x, y):
+        with tf.GradientTape() as tape:
+            preds = mdl(x)
+            loss = compute_loss_train(y, preds)
+        grads = tape.gradient(loss, mdl.trainable_variables)
+        optimizer.apply_gradients(zip(grads, mdl.trainable_variables))
+        mse_train(loss)
+        
+    
+    
+    for epoch in range(1, epoch + 1):
+        for (x, _) in dataloader(0, 20):
+            y = model_1.predict(x) + model_2.predict(x)
+            y = tf.convert_to_tensor(y)
+            #y = _
+            #print(y, y.dtype)
+            train_step(model_3, x, y)
+
+        print('Epoch: {}, Cost: {:.3f}'.format(
+            epoch+1,
+            mse_train.result()
+        ))
+    model_3.save(path2save_3 + '.h5')
+    print('saved')
+
+    del model_1
+    del model_2
+
+    for (x, y) in dataloader(3, 20):
+        pred = model_3.predict(x)
+        compute_loss_test(y, pred)
+
+    print('loss for model2', mse_test.result())
+
 if __name__ == '__main__':
 
-    create_model()
+    #create_model()
 
-    load()
+    #load()
 
+    train_by_othermodel()
