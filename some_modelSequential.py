@@ -136,9 +136,6 @@ def train_by_othermodel():
     def compute_loss_test(y, preds):
         loss = criterion(y, preds)
         mse_test(loss)
-    
-    
-
 
     @tf.function
     def train_step(mdl, x, y):
@@ -149,8 +146,7 @@ def train_by_othermodel():
         optimizer.apply_gradients(zip(grads, mdl.trainable_variables))
         mse_train(loss)
         
-    
-    
+    # train loop
     for epoch in range(1, epoch + 1):
         for (x, _) in dataloader(0, 20):
             y = model_1.predict(x) + model_2.predict(x)
@@ -174,6 +170,7 @@ def train_by_othermodel():
         compute_loss_test(y, pred)
 
     print('loss for model2', mse_test.result())
+
 
 def summary():
     path2save_1 = './model1'

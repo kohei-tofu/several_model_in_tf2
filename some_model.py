@@ -106,9 +106,71 @@ def load():
         compute_loss2(y, pred)
     print('loss for model2', mse2.result())
 
+
+def train_by_othermodel():
+
+    model_1 = encoder()
+    path2save_1 = './checkpoints1/weight'
+    model_1.load_weights(path2save_1)
+    model_2 = encoder()
+    path2save_2 = './checkpoints2/weight'
+    model_2.load_weights(path2save_2)
+    model_1.l1.trainable = False
+    model_2.l1.trainable = False
+
+    model_3 = encoder()
+    path2save_3 = './model3'
+    
+    epoch = 100
+    optimizer = optimizers.Adam(learning_rate=1e-3)
+    criterion = tf.keras.losses.MeanSquaredError()
+    mse_train = metrics.Mean()
+    mse_test = metrics.Mean()
+    def compute_loss_train(y, preds):
+        loss = criterion(y, preds)
+        return loss
+        
+    def compute_loss_test(y, preds):
+        loss = criterion(y, preds)
+        mse_test(loss)
+
+    @tf.function
+    def train_step(mdl, x, y):
+        with tf.GradientTape() as tape:
+            preds = mdl(x)
+            loss = compute_loss_train(y, preds)
+        grads = tape.gradient(loss, mdl.trainable_variables)
+        optimizer.apply_gradients(zip(grads, mdl.trainable_variables))
+        mse_train(loss)
+        
+    # train loop
+    for epoch in range(1, epoch + 1):
+        for (x, _) in dataloader(0, 20):
+            y = model_1.predict(x) + model_2.predict(x)
+            y = tf.convert_to_tensor(y)
+            train_step(model_3, x, y)
+
+        print('Epoch: {}, Cost: {:.3f}'.format(
+            epoch+1,
+            mse_train.result()
+        ))
+    model_3.save_weights(path2save_3)
+    print('saved')
+
+    del model_1
+    del model_2
+
+    for (x, y) in dataloader(3, 20):
+        pred = model_3.predict(x)
+        compute_loss_test(y, pred)
+
+    print('loss for model3', mse_test.result())
+
+
 if __name__ == '__main__':
 
-    create_model()
+    #create_model()
 
-    load()
+    #load()
 
+    train_by_othermodel()
